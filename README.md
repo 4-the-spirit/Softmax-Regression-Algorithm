@@ -1,1 +1,1 @@
-# Softmax-Regression
+# Softmax-Regression-Algorithm

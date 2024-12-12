@@ -1,44 +1,50 @@
 import numpy as np
 
 
-class DigitClassifier(SoftmaxRegression):
-  ONEHOT_TO_DIGIT_MAPPING = {tuple(np.eye(10, dtype=int)[i].tolist()): i for i in range(len(np.eye(10, dtype=int)))}
-  DIGIT_TO_ONEHOT_MAPPING = {value: key for key, value in ONEHOT_TO_DIGIT_MAPPING.items()}
-  INDEX_TO_DIGIT_MAPPING = {i:i for i in range(10)}
-
+class SoftmaxRegression:
   def __init__(self, training_data, training_labels, learning_rate=None):
-    super().__init__(training_data, training_labels, learning_rate)
+    self._training_data = np.array(training_data, dtype=float)
+    self.training_labels = np.array(training_labels)
+    self._classification_classes = None
 
-  def classify(self):
-    return super().classify(DigitClassifier.INDEX_TO_DIGIT_MAPPING)
+    self.weight_vectors = np.ones((len(self.training_data[0]), len(self.classification_classes)), dtype=float)
+    self.learning_rate = 1 if learning_rate is None else learning_rate
+
+  @property
+  def training_data(self):
+    return np.array([np.hstack(([1], image), dtype=float) for image in self._training_data])
+
+  @property
+  def classification_classes(self):
+    if self._classification_classes is None:
+      self._classification_classes = list(set(tuple(x.astype(int)) for x in self.training_labels))
+    return self._classification_classes
+
+  @property
+  def predicted_probabilities(self):
+    Z = np.dot(self.training_data, self.weight_vectors)
+    exp_Z = np.exp(Z - np.max(Z, axis=1, keepdims=True))
+    return exp_Z / np.sum(exp_Z, axis=1, keepdims=True)
+
+  @property
+  def gradient(self):
+    n = len(self.training_data)
+    return (1 / n) * np.dot(self.training_data.T, (self.predicted_probabilities - self.training_labels))
+
+  @property
+  def argmax(self):
+    '''
+    Returns a Numpy array of the argmax of each row of the predicted probabilities array.
+    '''
+    return np.argmax(self.predicted_probabilities, axis=1)
 
   def run(self, iterations):
     for k in range(iterations):
       self.weight_vectors -= self.learning_rate * self.gradient
-      errors.append(self.error_rate)
     return None
 
-  @property
-  def confusion_matrix(self):
-    # The Confusion Matrix
-    mat = np.zeros((len(self.classification_classes), len(self.classification_classes)), dtype=int)
-    predicted_classes = self.classify()
-    actual_classes = np.array([DigitClassifier.ONEHOT_TO_DIGIT_MAPPING[tuple(self.training_labels[i].astype(int).tolist())] for i in range(len(self.training_labels))])
-    mapped_classification_classes = [DigitClassifier.ONEHOT_TO_DIGIT_MAPPING[x] for x in self.classification_classes]
-    # The indexes of the predicted/actual classes in the classification classes array.
-    predicted_class_indexes = np.array([mapped_classification_classes.index(predicted_class) for predicted_class in predicted_classes])
-    actual_class_indexes = np.array([mapped_classification_classes.index(actual_class) for actual_class in actual_classes])
+  def classify(self, index_mapping):
+    return np.array([index_mapping[index] for index in self.argmax])
 
-    for i in range(len(actual_class_indexes)):
-      actual_class_index = actual_class_indexes[i]
-      predicted_class_index = predicted_class_indexes[i]
-      mat[actual_class_index][predicted_class_index] += 1
-    return mat
-
-  @property
-  def error_rate(self):
-    return 1 - self.accuracy
-
-  @property
-  def accuracy(self):
-    return np.sum(np.diag(self.confusion_matrix)) / np.sum(self.confusion_matrix)
+  def apply_mapping(self, mapping):
+      return np.array([mapping[tuple(x.astype(int).tolist())] for x in self.training_labels])

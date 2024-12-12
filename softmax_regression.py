@@ -13,7 +13,7 @@ class DigitClassifier(SoftmaxRegression):
     return super().classify(DigitClassifier.INDEX_TO_DIGIT_MAPPING)
 
   def run(self, iterations):
-    for k in tqdm(range(iterations), desc="Softmax Regression"):
+    for k in range(iterations):
       self.weight_vectors -= self.learning_rate * self.gradient
       errors.append(self.error_rate)
     return None
@@ -29,7 +29,7 @@ class DigitClassifier(SoftmaxRegression):
     predicted_class_indexes = np.array([mapped_classification_classes.index(predicted_class) for predicted_class in predicted_classes])
     actual_class_indexes = np.array([mapped_classification_classes.index(actual_class) for actual_class in actual_classes])
 
-    for i in tqdm(range(len(actual_class_indexes))):
+    for i in range(len(actual_class_indexes)):
       actual_class_index = actual_class_indexes[i]
       predicted_class_index = predicted_class_indexes[i]
       mat[actual_class_index][predicted_class_index] += 1

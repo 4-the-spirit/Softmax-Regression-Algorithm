@@ -33,13 +33,10 @@ class SoftmaxRegression:
 
   @property
   def argmax(self):
-    '''
-    Returns a Numpy array of the argmax of each row of the predicted probabilities array.
-    '''
     return np.argmax(self.predicted_probabilities, axis=1)
 
   def run(self, iterations):
-    for k in range(iterations):
+    for k in tqdm(range(iterations), desc="Softmax Regression"):
       self.weight_vectors -= self.learning_rate * self.gradient
     return None
 
